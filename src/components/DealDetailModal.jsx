@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
-import { X, Plane, Calendar, Building, Utensils, ShieldCheck, Heart, Sparkles, ExternalLink, Users, Clock, Info } from 'lucide-react';
-import { CURRENCY_RATES, generateCalendarPrices, generateBookingLink } from '../data/travelData';
+import { X, Plane, Calendar, Building, Utensils, ShieldCheck, Heart, Sparkles, ExternalLink, Users, Clock } from 'lucide-react';
+import { generateCalendarPrices, generateBookingLink } from '../data/travelData';
 import confetti from 'canvas-confetti';
 
 export default function DealDetailModal({
   deal,
   onClose,
   currency,
+  currencyRate = 1.0,
+  currencySymbol = '$',
   isFavorite,
   onToggleFavorite,
   originCode,
 }) {
   if (!deal) return null;
 
-  const curr = CURRENCY_RATES[currency] || CURRENCY_RATES.USD;
-
   // State for Trip Budget Calculator
   const [nights, setNights] = useState(4);
   const [travelers, setTravelers] = useState(1);
-  const [hotelType, setHotelType] = useState('comfort'); // 'budget', 'comfort', 'luxury'
+  const [hotelType, setHotelType] = useState('comfort');
 
   const hotelMultiplier = {
     budget: 0.65,
@@ -26,14 +26,15 @@ export default function DealDetailModal({
     luxury: 2.2,
   }[hotelType];
 
-  const flightPrice = Math.round(deal.basePriceUsd * curr.rate) * travelers;
-  const hotelPerNight = Math.round(deal.hotelEstimatePerNightUsd * curr.rate * hotelMultiplier);
+  const singleFlightPrice = currency === 'RUB' ? deal.basePriceRub : Math.round(deal.basePriceUsd * currencyRate);
+  const flightPrice = singleFlightPrice * travelers;
+  const hotelPerNight = Math.round((deal.hotelEstimatePerNightUsd || 30) * currencyRate * hotelMultiplier);
   const totalHotel = hotelPerNight * nights;
-  const totalExpenses = Math.round(deal.dailyExpenseUsd * curr.rate * nights * travelers);
+  const totalExpenses = Math.round((deal.dailyExpenseUsd || 25) * currencyRate * nights * travelers);
   const grandTotal = flightPrice + totalHotel + totalExpenses;
 
-  // Generate calendar days
-  const calendarDays = generateCalendarPrices(deal.basePriceUsd);
+  // Generate calendar days (real Travelpayouts month matrix or calculated)
+  const calendarDays = generateCalendarPrices(deal.basePriceUsd, originCode, deal.iata);
 
   const handleBookNow = () => {
     confetti({
@@ -84,7 +85,7 @@ export default function DealDetailModal({
                 </span>
               </div>
               <p className="text-sm text-slate-300 mt-1 max-w-xl">
-                {deal.description}
+                Вылет из г. {deal.origin} • {deal.dates} • Рейс #{deal.flightNumber || 'Direct'}
               </p>
             </div>
 
@@ -100,7 +101,7 @@ export default function DealDetailModal({
                 onClick={handleBookNow}
                 className="px-5 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-sm flex items-center space-x-2 shadow-xl shadow-sky-500/30 transition-all hover:scale-105"
               >
-                <span>Купить за {Math.round(deal.basePriceUsd * curr.rate).toLocaleString('ru-RU')} {curr.symbol}</span>
+                <span>Купить за {singleFlightPrice.toLocaleString('ru-RU')} {currencySymbol}</span>
                 <ExternalLink className="w-4 h-4" />
               </button>
             </div>
@@ -120,10 +121,10 @@ export default function DealDetailModal({
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-400 block mb-1">Время в полете</span>
+              <span className="text-[11px] font-semibold text-slate-400 block mb-1">Тип перелета</span>
               <div className="text-xs font-bold text-white flex items-center space-x-1.5">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <span>{deal.flightTime} ({deal.direct ? 'Прямой' : '1 пересадка'})</span>
+                <span>{deal.direct ? 'Прямой рейс' : '1 пересадка'}</span>
               </div>
             </div>
 
@@ -136,7 +137,7 @@ export default function DealDetailModal({
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-400 block mb-1">Даты суперцены</span>
+              <span className="text-[11px] font-semibold text-slate-400 block mb-1">Даты тарифа</span>
               <div className="text-xs font-bold text-sky-300 flex items-center space-x-1.5">
                 <Calendar className="w-3.5 h-3.5 text-sky-400" />
                 <span className="truncate">{deal.dates}</span>
@@ -144,7 +145,7 @@ export default function DealDetailModal({
             </div>
           </div>
 
-          {/* Section: Interactive 28-Day Price Calendar */}
+          {/* Section: 28-Day Price Calendar */}
           <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/70 border border-slate-800">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
@@ -171,7 +172,10 @@ export default function DealDetailModal({
 
             <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
               {calendarDays.map((item, idx) => {
-                const dayPrice = Math.round(item.priceUsd * curr.rate);
+                const dayPrice =
+                  currency === 'RUB'
+                    ? Math.round(item.priceUsd * 92.5)
+                    : Math.round(item.priceUsd * currencyRate);
                 return (
                   <div
                     key={idx}
@@ -188,7 +192,7 @@ export default function DealDetailModal({
                       <span>{item.dayNumber}</span>
                     </div>
                     <div className="text-xs sm:text-sm font-extrabold mt-1">
-                      {dayPrice} {curr.symbol}
+                      {dayPrice.toLocaleString('ru-RU')} {currencySymbol}
                     </div>
                   </div>
                 );
@@ -287,7 +291,7 @@ export default function DealDetailModal({
                   <span>Перелет ({travelers} чел)</span>
                 </span>
                 <span className="text-base font-bold text-white">
-                  {flightPrice.toLocaleString('ru-RU')} {curr.symbol}
+                  {flightPrice.toLocaleString('ru-RU')} {currencySymbol}
                 </span>
               </div>
 
@@ -297,7 +301,7 @@ export default function DealDetailModal({
                   <span>Отель ({nights} ноч.)</span>
                 </span>
                 <span className="text-base font-bold text-white">
-                  {totalHotel.toLocaleString('ru-RU')} {curr.symbol}
+                  {totalHotel.toLocaleString('ru-RU')} {currencySymbol}
                 </span>
               </div>
 
@@ -307,7 +311,7 @@ export default function DealDetailModal({
                   <span>Еда + транспорт</span>
                 </span>
                 <span className="text-base font-bold text-white">
-                  {totalExpenses.toLocaleString('ru-RU')} {curr.symbol}
+                  {totalExpenses.toLocaleString('ru-RU')} {currencySymbol}
                 </span>
               </div>
 
@@ -316,7 +320,7 @@ export default function DealDetailModal({
                   ИТОГО ПОЕЗДКА:
                 </span>
                 <span className="text-lg sm:text-xl font-black text-sky-200">
-                  {grandTotal.toLocaleString('ru-RU')} {curr.symbol}
+                  {grandTotal.toLocaleString('ru-RU')} {currencySymbol}
                 </span>
               </div>
             </div>

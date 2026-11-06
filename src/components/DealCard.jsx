@@ -1,24 +1,25 @@
 import React from 'react';
-import { Heart, Plane, Calendar, Clock, ExternalLink, Calculator, ShieldCheck, Sparkles, Building } from 'lucide-react';
-import { CURRENCY_RATES, generateBookingLink } from '../data/travelData';
+import { Heart, Plane, Calendar, Clock, ExternalLink, ShieldCheck, Building } from 'lucide-react';
+import { generateBookingLink } from '../data/travelData';
 import confetti from 'canvas-confetti';
 
 export default function DealCard({
   deal,
   currency,
+  currencyRate = 1.0,
+  currencySymbol = '$',
   isFavorite,
   onToggleFavorite,
   onSelectDeal,
   originCode,
 }) {
-  const curr = CURRENCY_RATES[currency] || CURRENCY_RATES.USD;
-  const price = Math.round(deal.basePriceUsd * curr.rate);
-  const usualPrice = Math.round(deal.usualPriceUsd * curr.rate);
-  const hotelPrice = Math.round(deal.hotelEstimatePerNightUsd * curr.rate);
+  // If RUB, use exact price from Travelpayouts. Otherwise convert from USD base
+  const price = currency === 'RUB' ? deal.basePriceRub : Math.round(deal.basePriceUsd * currencyRate);
+  const usualPrice = currency === 'RUB' ? deal.usualPriceRub : Math.round(deal.usualPriceUsd * currencyRate);
+  const hotelPrice = Math.round((deal.hotelEstimatePerNightUsd || 30) * currencyRate);
 
   const handleBookClick = (e) => {
     e.stopPropagation();
-    // Fun confetti burst
     confetti({
       particleCount: 45,
       spread: 60,
@@ -92,29 +93,27 @@ export default function DealCard({
         <div>
           {/* Flight Details */}
           <div className="flex items-center justify-between text-xs text-slate-400 pb-3 border-b border-slate-800">
-            <div className="flex items-center space-x-1.5">
-              <Plane className="w-3.5 h-3.5 text-sky-400" />
-              <span className="font-medium text-slate-300">{deal.airline}</span>
+            <div className="flex items-center space-x-1.5 truncate pr-2">
+              <Plane className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+              <span className="font-medium text-slate-300 truncate">{deal.airline}</span>
             </div>
-            <div className="flex items-center space-x-1">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <span>{deal.flightTime}</span>
-              <span className="text-slate-600">•</span>
-              <span className={deal.direct ? 'text-sky-400 font-semibold' : 'text-amber-400'}>
-                {deal.direct ? 'Прямой' : '1 пересадка'}
+            <div className="flex items-center space-x-1 flex-shrink-0">
+              <span className={deal.direct ? 'text-emerald-400 font-semibold' : 'text-amber-400'}>
+                {deal.direct ? 'Прямой' : 'Пересадка'}
               </span>
             </div>
           </div>
 
-          {/* Visa Status & Brief */}
+          {/* Visa Status */}
           <div className="mt-3 flex items-center space-x-1.5 text-xs text-slate-400">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
             <span className="truncate">{deal.visa}</span>
           </div>
 
-          <p className="mt-2 text-xs text-slate-400 line-clamp-2 leading-relaxed">
-            {deal.description}
-          </p>
+          <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
+            <span>Рейс #{deal.flightNumber || 'Direct'}</span>
+            <span className="text-[11px] text-sky-400/80 font-medium">Travelpayouts live</span>
+          </div>
         </div>
 
         {/* Price & Action Area */}
@@ -122,15 +121,15 @@ export default function DealCard({
           <div>
             <div className="flex items-baseline space-x-1.5">
               <span className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                {price.toLocaleString('ru-RU')} {curr.symbol}
+                {price.toLocaleString('ru-RU')} {currencySymbol}
               </span>
               <span className="text-xs line-through text-slate-500 font-medium">
-                {usualPrice.toLocaleString('ru-RU')} {curr.symbol}
+                {usualPrice.toLocaleString('ru-RU')} {currencySymbol}
               </span>
             </div>
             <div className="text-[11px] text-slate-400 flex items-center space-x-1">
               <Building className="w-3 h-3 text-slate-500" />
-              <span>отель от {hotelPrice} {curr.symbol}/ночь</span>
+              <span>отель от {hotelPrice} {currencySymbol}/ночь</span>
             </div>
           </div>
 

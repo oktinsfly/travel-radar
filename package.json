@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "sync": "node scripts/sync-travelpayouts.mjs",
     "build": "vite build",
-    "predeploy": "npm run build",
+    "predeploy": "npm run sync && npm run build",
     "deploy": "gh-pages -d dist",
     "lint": "oxlint",
     "preview": "vite preview"

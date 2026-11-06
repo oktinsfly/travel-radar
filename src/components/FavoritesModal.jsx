@@ -1,20 +1,22 @@
 import React from 'react';
-import { X, Heart, Plane, Trash2, ExternalLink, ArrowRight } from 'lucide-react';
-import { DESTINATIONS, CURRENCY_RATES, generateBookingLink } from '../data/travelData';
+import { X, Heart, Trash2, ExternalLink } from 'lucide-react';
+import { generateBookingLink } from '../data/travelData';
 
 export default function FavoritesModal({
   isOpen,
   onClose,
   favoriteIds,
+  allDeals = [],
   onRemoveFavorite,
   onSelectDeal,
   currency,
+  currencyRate = 1.0,
+  currencySymbol = '$',
   originCode,
 }) {
   if (!isOpen) return null;
 
-  const curr = CURRENCY_RATES[currency] || CURRENCY_RATES.USD;
-  const favoriteDeals = DESTINATIONS.filter((d) => favoriteIds.includes(d.id));
+  const favoriteDeals = allDeals.filter((d) => favoriteIds.includes(d.id));
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -42,12 +44,15 @@ export default function FavoritesModal({
               <Heart className="w-12 h-12 text-slate-700 mx-auto mb-3" />
               <p className="text-slate-300 font-bold text-sm">В избранном пока пусто</p>
               <p className="text-slate-500 text-xs mt-1 max-w-xs mx-auto">
-                Нажимай на сердечко на любой карточке, чтобы сохранить интересные дешевые билеты.
+                Нажимай на сердечко на любой карточке, чтобы сохранить билеты.
               </p>
             </div>
           ) : (
             favoriteDeals.map((deal) => {
-              const price = Math.round(deal.basePriceUsd * curr.rate);
+              const price =
+                currency === 'RUB'
+                  ? deal.basePriceRub
+                  : Math.round(deal.basePriceUsd * currencyRate);
               return (
                 <div
                   key={deal.id}
@@ -81,7 +86,7 @@ export default function FavoritesModal({
                   <div className="flex items-center space-x-2 flex-shrink-0">
                     <div className="text-right">
                       <div className="text-sm font-black text-white">
-                        {price.toLocaleString('ru-RU')} {curr.symbol}
+                        {price.toLocaleString('ru-RU')} {currencySymbol}
                       </div>
                       <div className="text-[10px] text-emerald-400 font-bold">
                         -{deal.discountPercent}%

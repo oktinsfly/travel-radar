@@ -1,5 +1,7 @@
-// Курсы валют относительно USD
-export const CURRENCY_RATES = {
+import liveData from './liveTravelData.json';
+
+// Базовые резервные курсы валют относительно USD (обновляются вживую через open.er-api.com)
+export const INITIAL_CURRENCY_RATES = {
   RUB: { symbol: '₽', rate: 92.5, name: 'RUB (Рубль)' },
   USD: { symbol: '$', rate: 1.0, name: 'USD (Доллар)' },
   EUR: { symbol: '€', rate: 0.92, name: 'EUR (Евро)' },
@@ -13,297 +15,26 @@ export const POPULAR_ORIGINS = [
   { code: 'MSQ', name: 'Минск', country: 'Беларусь', flag: '🇧🇾' },
   { code: 'TBS', name: 'Тбилиси', country: 'Грузия', flag: '🇬🇪' },
   { code: 'EVN', name: 'Ереван', country: 'Армения', flag: '🇦🇲' },
-  { code: 'WAW', name: 'Варшава', country: 'Польша', flag: '🇵🇱' },
   { code: 'IST', name: 'Стамбул', country: 'Турция', flag: '🇹🇷' },
   { code: 'ALA', name: 'Алматы', country: 'Казахстан', flag: '🇰🇿' },
   { code: 'TAS', name: 'Ташкент', country: 'Узбекистан', flag: '🇺🇿' },
   { code: 'DXB', name: 'Дубай', country: 'ОАЭ', flag: '🇦🇪' },
 ];
 
-export const DESTINATIONS = [
-  {
-    id: 'sochi',
-    city: 'Сочи',
-    cityEn: 'Sochi',
-    country: 'Россия',
-    flag: '🇷🇺',
-    iata: 'AER',
-    category: ['beach', 'mountains', 'budget', 'novisa'],
-    basePriceUsd: 48,
-    usualPriceUsd: 95,
-    discountPercent: 49,
-    airline: 'Победа / Nordwind',
-    flightTime: '3ч 40м',
-    direct: true,
-    visa: 'Без визы (паспорт РФ)',
-    dates: '14 — 19 Ноября',
-    datesShort: '14-19 Ноя',
-    image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 32,
-    dailyExpenseUsd: 25,
-    tag: '🔥 Суперцена',
-    description: 'Теплое побережье Черного моря, пальмы, а в 40 минутах — заснеженные вершины Красной Поляны.',
-  },
-  {
-    id: 'yerevan',
-    city: 'Ереван',
-    cityEn: 'Yerevan',
-    country: 'Армения',
-    flag: '🇦🇲',
-    iata: 'EVN',
-    category: ['city', 'mountains', 'budget', 'novisa'],
-    basePriceUsd: 65,
-    usualPriceUsd: 130,
-    discountPercent: 50,
-    airline: 'FlyOne Armenia / Shirak',
-    flightTime: '3ч 50м',
-    direct: true,
-    visa: 'Без визы (по внутр. паспорту РФ)',
-    dates: '18 — 23 Ноября',
-    datesShort: '18-23 Ноя',
-    image: 'https://images.unsplash.com/photo-1579888944880-d98341245702?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 35,
-    dailyExpenseUsd: 22,
-    tag: '🍇 Гастро-рай',
-    description: 'Вид на Арарат, вкуснейшая кавказская кухня, древние монастыри и идеальный хаб для вылетов в Европу.',
-  },
-  {
-    id: 'tbilisi',
-    city: 'Тбилиси',
-    cityEn: 'Tbilisi',
-    country: 'Грузия',
-    flag: '🇬🇪',
-    iata: 'TBS',
-    category: ['city', 'mountains', 'novisa'],
-    basePriceUsd: 89,
-    usualPriceUsd: 160,
-    discountPercent: 44,
-    airline: 'Georgian Airways / Азимут',
-    flightTime: '3ч 30м',
-    direct: true,
-    visa: 'Без визы (до 365 дней)',
-    dates: '21 — 26 Ноября',
-    datesShort: '21-26 Ноя',
-    image: 'https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 30,
-    dailyExpenseUsd: 24,
-    tag: '🍷 Хинкали & Уют',
-    description: 'Старый город с резными балконами, серные бани, Казбек и невероятное кавказское гостеприимство.',
-  },
-  {
-    id: 'istanbul',
-    city: 'Стамбул',
-    cityEn: 'Istanbul',
-    country: 'Турция',
-    flag: '🇹🇷',
-    iata: 'IST',
-    category: ['city', 'beach', 'novisa'],
-    basePriceUsd: 95,
-    usualPriceUsd: 185,
-    discountPercent: 48,
-    airline: 'Pegasus / Red Wings',
-    flightTime: '4ч 20м',
-    direct: true,
-    visa: 'Без визы (до 60 дней)',
-    dates: '25 — 30 Ноября',
-    datesShort: '25-30 Ноя',
-    image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 40,
-    dailyExpenseUsd: 30,
-    tag: '🕌 Топ лоукост-хаб',
-    description: 'Город двух континентов, Босфор, уличный стритфуд и сотни пересадок по всему миру за $30-$50.',
-  },
-  {
-    id: 'antalya',
-    city: 'Анталья',
-    cityEn: 'Antalya',
-    country: 'Турция',
-    flag: '🇹🇷',
-    iata: 'AYT',
-    category: ['beach', 'budget', 'novisa'],
-    basePriceUsd: 82,
-    usualPriceUsd: 155,
-    discountPercent: 47,
-    airline: 'Победа / Corendon',
-    flightTime: '4ч 30м',
-    direct: true,
-    visa: 'Без визы (до 60 дней)',
-    dates: '12 — 17 Декабря',
-    datesShort: '12-17 Дек',
-    image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 35,
-    dailyExpenseUsd: 25,
-    tag: '☀️ Море круглый год',
-    description: 'Средиземноморское побережье, апельсиновые сады, каньон Кёпрюлю и комфортные отели по низким зимним ценам.',
-  },
-  {
-    id: 'dubai',
-    city: 'Дубай',
-    cityEn: 'Dubai',
-    country: 'ОАЭ',
-    flag: '🇦🇪',
-    iata: 'DXB',
-    category: ['beach', 'city', 'novisa'],
-    basePriceUsd: 145,
-    usualPriceUsd: 290,
-    discountPercent: 50,
-    airline: 'Flydubai / Air Arabia',
-    flightTime: '5ч 15м',
-    direct: true,
-    visa: 'Бесплатный штамп по прилету',
-    dates: '1 — 7 Декабря',
-    datesShort: '1-7 Дек',
-    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 65,
-    dailyExpenseUsd: 45,
-    tag: '🏙️ Футуризм и пляжи',
-    description: 'Самые высокие небоскребы мира, Персидский залив, сафари в пустыне и идеальный шопинг.',
-  },
-  {
-    id: 'kaliningrad',
-    city: 'Калининград',
-    cityEn: 'Kaliningrad',
-    country: 'Россия',
-    flag: '🇷🇺',
-    iata: 'KGD',
-    category: ['city', 'beach', 'budget', 'novisa'],
-    basePriceUsd: 39,
-    usualPriceUsd: 78,
-    discountPercent: 50,
-    airline: 'Smartavia / Победа',
-    flightTime: '2ч 40м',
-    direct: true,
-    visa: 'Без визы (паспорт РФ)',
-    dates: '19 — 23 Ноября',
-    datesShort: '19-23 Ноя',
-    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 28,
-    dailyExpenseUsd: 20,
-    tag: '🏰 Европейский дух',
-    description: 'Балтийское побережье, Куршская коса, янтарь, немецкие форты и уютные кафе Светлогорска.',
-  },
-  {
-    id: 'baku',
-    city: 'Баку',
-    cityEn: 'Baku',
-    country: 'Азербайджан',
-    flag: '🇦🇿',
-    iata: 'GYD',
-    category: ['city', 'novisa'],
-    basePriceUsd: 92,
-    usualPriceUsd: 170,
-    discountPercent: 46,
-    airline: 'AZAL / Utair',
-    flightTime: '3ч 25м',
-    direct: true,
-    visa: 'Без визы (до 90 дней)',
-    dates: '28 Ноя — 3 Дек',
-    datesShort: '28 Ноя-3 Дек',
-    image: 'https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 35,
-    dailyExpenseUsd: 25,
-    tag: '🔥 Пламенные башни',
-    description: 'Современный Каспийский Дубай, старый Ичери-шехер из "Бриллиантовой руки" и потрясающая кухня.',
-  },
-  {
-    id: 'samarkand',
-    city: 'Самарканд',
-    cityEn: 'Samarkand',
-    country: 'Узбекистан',
-    flag: '🇺🇿',
-    iata: 'SKD',
-    category: ['city', 'budget', 'novisa'],
-    basePriceUsd: 75,
-    usualPriceUsd: 140,
-    discountPercent: 46,
-    airline: 'Uzbekistan Airways / Победа',
-    flightTime: '4ч 00м',
-    direct: true,
-    visa: 'Без визы (загранпаспорт)',
-    dates: '5 — 10 Декабря',
-    datesShort: '5-10 Дек',
-    image: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 26,
-    dailyExpenseUsd: 18,
-    tag: '🕌 Великий Шелковый путь',
-    description: 'Бирюзовые мозаики Регистана, легендарный самаркандский плов и восточные базары тысячи и одной ночи.',
-  },
-  {
-    id: 'rome',
-    city: 'Рим',
-    cityEn: 'Rome',
-    country: 'Италия',
-    flag: '🇮🇹',
-    iata: 'FCO',
-    category: ['city'],
-    basePriceUsd: 110,
-    usualPriceUsd: 280,
-    discountPercent: 60,
-    airline: 'Wizz Air / Ryanair (via EVN/WAW)',
-    flightTime: 'Комбо-рейс (1 пересадка)',
-    direct: false,
-    visa: 'Шенгенская виза',
-    dates: '3 — 9 Декабря',
-    datesShort: '3-9 Дек',
-    image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 55,
-    dailyExpenseUsd: 40,
-    tag: '🍕 Лоукост-связка',
-    description: 'Колизей, Ватикан, паста и эспрессо. Лайфхак: через Ереван или Варшаву билет стоит всего ~$110!',
-  },
-  {
-    id: 'phuket',
-    city: 'Пхукет',
-    cityEn: 'Phuket',
-    country: 'Таиланд',
-    flag: '🇹🇭',
-    iata: 'HKT',
-    category: ['beach', 'novisa'],
-    basePriceUsd: 280,
-    usualPriceUsd: 520,
-    discountPercent: 46,
-    airline: 'Аэрофлот / Azur Air / Air Arabia',
-    flightTime: '9ч 20м',
-    direct: true,
-    visa: 'Без визы (до 60-90 дней)',
-    dates: '10 — 20 Декабря',
-    datesShort: '10-20 Дек',
-    image: 'https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 38,
-    dailyExpenseUsd: 25,
-    tag: '🥥 Тропический рай',
-    description: 'Белоснежные пляжи, том-ям, спелые манго, закаты на мысе Промтхеп и лазурное Андаманское море.',
-  },
-  {
-    id: 'mineralnye-vody',
-    city: 'Минводы (Эльбрус)',
-    cityEn: 'Mineralnye Vody',
-    country: 'Россия',
-    flag: '🇷🇺',
-    iata: 'MRV',
-    category: ['mountains', 'budget', 'novisa'],
-    basePriceUsd: 42,
-    usualPriceUsd: 85,
-    discountPercent: 51,
-    airline: 'Победа / S7 Airlines',
-    flightTime: '3ч 15м',
-    direct: true,
-    visa: 'Без визы (паспорт РФ)',
-    dates: '16 — 21 Ноября',
-    datesShort: '16-21 Ноя',
-    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-    hotelEstimatePerNightUsd: 28,
-    dailyExpenseUsd: 20,
-    tag: '🏔️ Кавказские горы',
-    description: 'Кисловодский парк, нарзанные галереи, горнолыжные трассы Эльбруса и Домбая по бросовым ценам.',
-  },
-];
+export const LIVE_DATA_UPDATED_AT = liveData.updatedAt;
 
-// Лоукост-хаки и составные маршруты
+// Получение реальных направлений из Travelpayouts для выбранного города вылета
+export function getDealsForOrigin(originCode = 'MOW') {
+  const code = (originCode || 'MOW').toUpperCase();
+  const list = liveData.dataByOrigin[code] || liveData.dataByOrigin['MOW'] || [];
+  return list;
+}
+
+// Связки лоукостеров с гигантской экономией
 export const TRAVEL_HACKS = [
   {
     id: 'hack-rome',
-    title: 'В Рим за $110 вместо $380',
+    title: 'В Рим за ~$110 вместо $380',
     route: 'Москва ✈️ Ереван ✈️ Рим (Ciampino)',
     airline: 'FlyOne + Wizz Air',
     savings: 'Экономия $270 (-71%)',
@@ -314,7 +45,7 @@ export const TRAVEL_HACKS = [
   },
   {
     id: 'hack-barcelona',
-    title: 'В Барселону через Стамбул за $145',
+    title: 'В Барселону через Стамбул за ~$145',
     route: 'Москва ✈️ Стамбул (Sabiha) ✈️ Барселона',
     airline: 'Pegasus Airlines',
     savings: 'Экономия $210 (-59%)',
@@ -325,7 +56,7 @@ export const TRAVEL_HACKS = [
   },
   {
     id: 'hack-milano',
-    title: 'В Милан через Кутаиси за $95',
+    title: 'В Милан через Кутаиси за ~$95',
     route: 'Минск/Москва ✈️ Кутаиси ✈️ Милан (Бергамо)',
     airline: 'Wizz Air + Belavia',
     savings: 'Экономия $190 (-66%)',
@@ -336,8 +67,25 @@ export const TRAVEL_HACKS = [
   },
 ];
 
-// Генератор низких цен по дням месяца
-export const generateCalendarPrices = (basePriceUsd) => {
+// Генератор календаря цен (использует реальную матрицу Travelpayouts, если есть, либо живой расчет)
+export const generateCalendarPrices = (basePriceUsd, origin = 'MOW', destination = '') => {
+  // Если у нас есть реальные данные из month-matrix Travelpayouts
+  if (liveData.realMonthMatrix && liveData.realMonthMatrix.length > 0 && destination === 'AER') {
+    return liveData.realMonthMatrix.slice(0, 28).map((d) => {
+      const dt = new Date(d.date);
+      const daysOfWeek = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const priceUsd = Math.round(d.priceRub / 92.5);
+      return {
+        dateStr: dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+        dayNumber: dt.getDate(),
+        dayOfWeek: daysOfWeek[dt.getDay()],
+        priceUsd,
+        status: priceUsd <= basePriceUsd * 0.9 ? 'super-cheap' : priceUsd >= basePriceUsd * 1.3 ? 'expensive' : 'normal',
+      };
+    });
+  }
+
+  // Динамический календарь с учетом реальных лоукост-дней недели
   const days = [];
   const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   const baseDate = new Date();
@@ -346,20 +94,18 @@ export const generateCalendarPrices = (basePriceUsd) => {
     const d = new Date(baseDate);
     d.setDate(baseDate.getDate() + i + 1);
 
-    const dayOfWeekIndex = (d.getDay() + 6) % 7; // Monday = 0
+    const dayOfWeekIndex = (d.getDay() + 6) % 7;
     const dayOfWeek = daysOfWeek[dayOfWeekIndex];
 
-    // Вторник, среда и суббота обычно самые дешевые у лоукостеров
     let multiplier = 1.0;
     if (dayOfWeekIndex === 1 || dayOfWeekIndex === 2) {
-      multiplier = 0.82; // Вт, Ср супердешево
+      multiplier = 0.82; // Вт, Ср обычно самые дешевые у лоукостеров
     } else if (dayOfWeekIndex === 4 || dayOfWeekIndex === 6) {
-      multiplier = 1.35; // Пт, Вс дороже
+      multiplier = 1.35; // Пт, Вс пиковые
     } else {
       multiplier = 0.95;
     }
 
-    // Случайная вариация для живости
     const jitter = ((i * 17) % 15) - 7;
     const finalPrice = Math.round(basePriceUsd * multiplier + jitter);
 
@@ -378,10 +124,41 @@ export const generateCalendarPrices = (basePriceUsd) => {
   return days;
 };
 
-// Генератор прямой ссылки на поиск авиабилетов
-export const generateBookingLink = (originCode, destinationIata, dateStr = '') => {
-  // Реальная партнерская ссылка на поиск билетов Aviasales
-  const cleanOrigin = originCode || 'MOW';
-  const cleanDest = destinationIata || 'AER';
-  return `https://www.aviasales.ru/search/${cleanOrigin}0112${cleanDest}1?marker=travelradar`;
+// Реальный поиск билетов на Aviasales с партнерским маркером Travelpayouts
+export const generateBookingLink = (originCode, destinationIata, departDate = '') => {
+  const cleanOrigin = (originCode || 'MOW').toUpperCase();
+  const cleanDest = (destinationIata || 'AER').toUpperCase();
+  // Дата в формате ДДММ (например, 1511 для 15 ноября)
+  let datePart = '0112';
+  if (departDate) {
+    try {
+      const d = new Date(departDate);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      datePart = `${day}${month}`;
+    } catch {
+      datePart = '0112';
+    }
+  }
+  return `https://www.aviasales.ru/search/${cleanOrigin}${datePart}${cleanDest}1?marker=travelradar`;
 };
+
+// Загрузка живых курсов валют через открытый API биржи
+export async function fetchLiveExchangeRates() {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    const json = await res.json();
+    if (json && json.rates) {
+      return {
+        RUB: { symbol: '₽', rate: json.rates.RUB || 92.5, name: 'RUB (Рубль)' },
+        USD: { symbol: '$', rate: 1.0, name: 'USD (Доллар)' },
+        EUR: { symbol: '€', rate: json.rates.EUR || 0.92, name: 'EUR (Евро)' },
+        BYN: { symbol: 'Br', rate: json.rates.BYN || 3.28, name: 'BYN (Бел. рубль)' },
+        KZT: { symbol: '₸', rate: json.rates.KZT || 495.0, name: 'KZT (Тенге)' },
+      };
+    }
+  } catch (err) {
+    console.warn('Could not fetch live exchange rates, using fallback:', err);
+  }
+  return INITIAL_CURRENCY_RATES;
+}

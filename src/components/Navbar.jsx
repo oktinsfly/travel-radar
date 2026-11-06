@@ -1,14 +1,17 @@
 import React from 'react';
-import { Compass, Heart, DollarSign, Sparkles } from 'lucide-react';
+import { Compass, Heart, Sparkles, Activity } from 'lucide-react';
 import GithubIcon from './GithubIcon';
-import { CURRENCY_RATES } from '../data/travelData';
+import { INITIAL_CURRENCY_RATES } from '../data/travelData';
 
 export default function Navbar({
   currency,
   setCurrency,
+  currencyRates = INITIAL_CURRENCY_RATES,
   favoritesCount,
   onOpenFavorites,
 }) {
+  const currentRates = currencyRates || INITIAL_CURRENCY_RATES;
+
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -22,12 +25,13 @@ export default function Navbar({
               <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-sky-200 to-sky-400 bg-clip-text text-transparent">
                 TravelRadar
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                PRO
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                <span>LIVE API</span>
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">
-              Радар самых дешёвых путешествий
+              Travelpayouts Flight Radar
             </p>
           </div>
         </div>
@@ -41,7 +45,7 @@ export default function Navbar({
               onChange={(e) => setCurrency(e.target.value)}
               className="appearance-none bg-slate-900 border border-slate-700/80 text-xs sm:text-sm font-semibold text-slate-200 rounded-lg pl-3 pr-8 py-1.5 hover:border-sky-500/50 focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer transition-colors"
             >
-              {Object.entries(CURRENCY_RATES).map(([key, item]) => (
+              {Object.entries(currentRates).map(([key, item]) => (
                 <option key={key} value={key} className="bg-slate-900 text-slate-200">
                   {item.symbol} {key}
                 </option>

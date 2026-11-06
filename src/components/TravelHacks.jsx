@@ -1,10 +1,8 @@
 import React from 'react';
-import { Lightbulb, ArrowRight, Zap, TrendingDown, Plane, CheckCircle2 } from 'lucide-react';
-import { TRAVEL_HACKS, CURRENCY_RATES, generateBookingLink } from '../data/travelData';
+import { Lightbulb, ArrowRight, Zap, TrendingDown, Plane } from 'lucide-react';
+import { TRAVEL_HACKS, generateBookingLink } from '../data/travelData';
 
-export default function TravelHacks({ currency, originCode }) {
-  const curr = CURRENCY_RATES[currency] || CURRENCY_RATES.USD;
-
+export default function TravelHacks({ originCode }) {
   return (
     <section className="py-12 border-t border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

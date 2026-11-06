@@ -7,32 +7,48 @@ import TravelHacks from './components/TravelHacks';
 import FavoritesModal from './components/FavoritesModal';
 import PriceAlertBanner from './components/PriceAlertBanner';
 import Footer from './components/Footer';
-import { DESTINATIONS, POPULAR_ORIGINS, CURRENCY_RATES } from './data/travelData';
-import { ArrowDownUp, Filter, Sparkles, AlertCircle } from 'lucide-react';
+import {
+  getDealsForOrigin,
+  POPULAR_ORIGINS,
+  INITIAL_CURRENCY_RATES,
+  fetchLiveExchangeRates,
+  LIVE_DATA_UPDATED_AT,
+} from './data/travelData';
+import { ArrowDownUp, Filter, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
   // State
   const [currency, setCurrency] = useState(() => {
     return localStorage.getItem('tr_currency') || 'RUB';
   });
+  const [currencyRates, setCurrencyRates] = useState(INITIAL_CURRENCY_RATES);
   const [origin, setOrigin] = useState('MOW');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [maxBudgetUsd, setMaxBudgetUsd] = useState(250);
+  const [maxBudgetUsd, setMaxBudgetUsd] = useState(300);
   const [directOnly, setDirectOnly] = useState(false);
-  const [sortBy, setSortBy] = useState('price-asc'); // 'price-asc', 'discount-desc'
+  const [sortBy, setSortBy] = useState('price-asc');
 
   const [favorites, setFavorites] = useState(() => {
     try {
       const saved = localStorage.getItem('tr_favorites');
-      return saved ? JSON.parse(saved) : ['sochi', 'yerevan'];
+      return saved ? JSON.parse(saved) : ['mow-aer', 'mow-evn'];
     } catch {
-      return ['sochi', 'yerevan'];
+      return ['mow-aer', 'mow-evn'];
     }
   });
 
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
+
+  // Fetch live exchange rates from financial API on mount
+  useEffect(() => {
+    async function loadRates() {
+      const live = await fetchLiveExchangeRates();
+      if (live) setCurrencyRates(live);
+    }
+    loadRates();
+  }, []);
 
   // Persistence
   useEffect(() => {
@@ -49,37 +65,48 @@ export default function App() {
     );
   };
 
+  // Real deals for the selected origin
+  const allDealsForOrigin = useMemo(() => {
+    return getDealsForOrigin(origin);
+  }, [origin]);
+
+  const activeCurrencyRate = currencyRates[currency]?.rate || 1.0;
+  const activeCurrencySymbol = currencyRates[currency]?.symbol || '$';
+
   // Filter & Sort Logic
   const filteredDeals = useMemo(() => {
-    return DESTINATIONS.filter((item) => {
-      // Category filter
-      if (selectedCategory !== 'all') {
-        if (!item.category.includes(selectedCategory)) return false;
-      }
+    return allDealsForOrigin
+      .filter((item) => {
+        // Category filter
+        if (selectedCategory !== 'all') {
+          if (!item.category || !item.category.includes(selectedCategory)) return false;
+        }
 
-      // Budget filter
-      if (item.basePriceUsd > maxBudgetUsd) return false;
+        // Budget filter (converted to USD equivalent)
+        const priceInUsd = Math.round(item.basePriceRub / 92.5);
+        if (priceInUsd > maxBudgetUsd) return false;
 
-      // Direct only filter
-      if (directOnly && !item.direct) return false;
+        // Direct flight filter
+        if (directOnly && !item.direct) return false;
 
-      // Search query filter (city, country, IATA)
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        const matchCity = item.city.toLowerCase().includes(query);
-        const matchCityEn = item.cityEn.toLowerCase().includes(query);
-        const matchCountry = item.country.toLowerCase().includes(query);
-        const matchIata = item.iata.toLowerCase().includes(query);
-        if (!matchCity && !matchCityEn && !matchCountry && !matchIata) return false;
-      }
+        // Search query filter (city, country, IATA)
+        if (searchQuery.trim()) {
+          const query = searchQuery.toLowerCase().trim();
+          const matchCity = item.city.toLowerCase().includes(query);
+          const matchCityEn = item.cityEn?.toLowerCase().includes(query);
+          const matchCountry = item.country.toLowerCase().includes(query);
+          const matchIata = item.iata.toLowerCase().includes(query);
+          if (!matchCity && !matchCityEn && !matchCountry && !matchIata) return false;
+        }
 
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === 'price-asc') return a.basePriceUsd - b.basePriceUsd;
-      if (sortBy === 'discount-desc') return b.discountPercent - a.discountPercent;
-      return 0;
-    });
-  }, [selectedCategory, maxBudgetUsd, directOnly, searchQuery, sortBy]);
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'price-asc') return a.basePriceRub - b.basePriceRub;
+        if (sortBy === 'discount-desc') return b.discountPercent - a.discountPercent;
+        return 0;
+      });
+  }, [allDealsForOrigin, selectedCategory, maxBudgetUsd, directOnly, searchQuery, sortBy]);
 
   const activeOriginObj = POPULAR_ORIGINS.find((o) => o.code === origin) || POPULAR_ORIGINS[0];
 
@@ -89,6 +116,7 @@ export default function App() {
       <Navbar
         currency={currency}
         setCurrency={setCurrency}
+        currencyRates={currencyRates}
         favoritesCount={favorites.length}
         onOpenFavorites={() => setIsFavoritesOpen(true)}
       />
@@ -103,7 +131,8 @@ export default function App() {
         setSelectedCategory={setSelectedCategory}
         maxBudgetUsd={maxBudgetUsd}
         setMaxBudgetUsd={setMaxBudgetUsd}
-        currency={currency}
+        currencyRate={activeCurrencyRate}
+        currencySymbol={activeCurrencySymbol}
         directOnly={directOnly}
         setDirectOnly={setDirectOnly}
       />
@@ -114,13 +143,14 @@ export default function App() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 gap-4 border-b border-slate-800/80">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-white flex items-center space-x-2">
-              <span>Горящие направления из г. {activeOriginObj.name}</span>
-              <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+              <span>Живые тарифы из г. {activeOriginObj.name}</span>
+              <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 {filteredDeals.length} найдено
               </span>
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Цены обновлены и проверены лоукост-сканером на ближайшие даты
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 flex items-center space-x-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping" />
+              <span>Реальные цены из систем бронирования Travelpayouts / Aviasales</span>
             </p>
           </div>
 
@@ -146,6 +176,8 @@ export default function App() {
                 key={deal.id}
                 deal={deal}
                 currency={currency}
+                currencyRate={activeCurrencyRate}
+                currencySymbol={activeCurrencySymbol}
                 isFavorite={favorites.includes(deal.id)}
                 onToggleFavorite={toggleFavorite}
                 onSelectDeal={(d) => setSelectedDeal(d)}
@@ -158,11 +190,11 @@ export default function App() {
             <AlertCircle className="w-12 h-12 text-sky-400 mx-auto mb-3 opacity-60" />
             <h3 className="text-lg font-bold text-white">В этот бюджет направлений пока нет</h3>
             <p className="text-sm text-slate-400 mt-1 max-w-md mx-auto">
-              Попробуйте увеличить ползунок бюджета или сбросить фильтры категорий.
+              Попробуйте увеличить ползунок бюджета или выбрать категорию «Все предложения».
             </p>
             <button
               onClick={() => {
-                setMaxBudgetUsd(350);
+                setMaxBudgetUsd(400);
                 setSelectedCategory('all');
                 setSearchQuery('');
                 setDirectOnly(false);
@@ -176,7 +208,7 @@ export default function App() {
       </main>
 
       {/* Low-cost Routing Hacks Section */}
-      <TravelHacks currency={currency} originCode={origin} />
+      <TravelHacks currency={currency} currencyRate={activeCurrencyRate} originCode={origin} />
 
       {/* Subscription Alert Banner */}
       <PriceAlertBanner />
@@ -186,6 +218,8 @@ export default function App() {
         deal={selectedDeal}
         onClose={() => setSelectedDeal(null)}
         currency={currency}
+        currencyRate={activeCurrencyRate}
+        currencySymbol={activeCurrencySymbol}
         isFavorite={selectedDeal ? favorites.includes(selectedDeal.id) : false}
         onToggleFavorite={toggleFavorite}
         originCode={origin}
@@ -195,9 +229,12 @@ export default function App() {
         isOpen={isFavoritesOpen}
         onClose={() => setIsFavoritesOpen(false)}
         favoriteIds={favorites}
+        allDeals={allDealsForOrigin}
         onRemoveFavorite={toggleFavorite}
         onSelectDeal={(d) => setSelectedDeal(d)}
         currency={currency}
+        currencyRate={activeCurrencyRate}
+        currencySymbol={activeCurrencySymbol}
         originCode={origin}
       />
 
